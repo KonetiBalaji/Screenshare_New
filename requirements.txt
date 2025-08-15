@@ -1,0 +1,25 @@
+# Core dependencies
+flask>=2.3.0
+flask-socketio>=5.3.0
+opencv-python>=4.8.0
+numpy>=1.24.0
+pillow>=10.0.0
+
+# Screen capture and system interaction
+pyperclip>=1.8.0
+screeninfo>=0.8.0
+pyautogui>=0.9.50
+keyboard>=0.13.0
+
+# System tray and GUI
+pystray>=0.19.0
+
+# Network and security
+cryptography>=41.0.0
+requests>=2.31.0
+
+# Development and utilities
+python-dotenv>=1.0.0
+
+# Additional dependencies for better compatibility
+eventlet>=0.33.0

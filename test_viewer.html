@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Viewer Test</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .status {
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 5px;
+            font-weight: bold;
+        }
+        .connected { background: #d4edda; color: #155724; }
+        .disconnected { background: #f8d7da; color: #721c24; }
+        .connecting { background: #fff3cd; color: #856404; }
+        input, button {
+            padding: 10px;
+            margin: 5px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+        button {
+            background: #007bff;
+            color: white;
+            cursor: pointer;
+        }
+        button:hover { background: #0056b3; }
+        #remoteScreen {
+            max-width: 100%;
+            border: 2px solid #ddd;
+            border-radius: 5px;
+        }
+        .log {
+            background: #f8f9fa;
+            border: 1px solid #dee2e6;
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 5px;
+            max-height: 200px;
+            overflow-y: auto;
+            font-family: monospace;
+            font-size: 12px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Viewer Test</h1>
+        
+        <div>
+            <input type="text" id="sessionId" placeholder="Enter Session ID">
+            <button onclick="joinSession()">Join Session</button>
+            <button onclick="leaveSession()">Leave Session</button>
+        </div>
+        
+        <div id="status" class="status disconnected">Disconnected</div>
+        
+        <div id="screenContainer" style="display: none;">
+            <h3>Remote Screen</h3>
+            <img id="remoteScreen" style="display: none;">
+            <div id="loading">Waiting for screen share...</div>
+        </div>
+        
+        <div class="log" id="log"></div>
+    </div>
+
+    <script>
+        let socket = null;
+        let sessionId = null;
+
+        function log(message) {
+            const logDiv = document.getElementById('log');
+            const timestamp = new Date().toLocaleTimeString();
+            logDiv.innerHTML += `[${timestamp}] ${message}<br>`;
+            logDiv.scrollTop = logDiv.scrollHeight;
+            console.log(message);
+        }
+
+        function updateStatus(message, type) {
+            const status = document.getElementById('status');
+            status.textContent = message;
+            status.className = `status ${type}`;
+            log(`Status: ${message}`);
+        }
+
+        function joinSession() {
+            const sessionIdInput = document.getElementById('sessionId').value.trim();
+            if (!sessionIdInput) {
+                alert('Please enter a session ID');
+                return;
+            }
+            
+            sessionId = sessionIdInput;
+            updateStatus('Connecting...', 'connecting');
+            log(`Joining session: ${sessionId}`);
+            
+            socket = io();
+            
+            socket.on('connect', () => {
+                updateStatus('Connected', 'connected');
+                log('Socket connected');
+                
+                socket.emit('join_session', {
+                    session_id: sessionId,
+                    client_type: 'viewer',
+                    username: 'TestViewer'
+                });
+                
+                document.getElementById('screenContainer').style.display = 'block';
+            });
+            
+            socket.on('disconnect', () => {
+                updateStatus('Disconnected', 'disconnected');
+                log('Socket disconnected');
+                document.getElementById('screenContainer').style.display = 'none';
+            });
+            
+            socket.on('joined_session', (data) => {
+                log(`Joined session: ${JSON.stringify(data)}`);
+            });
+            
+            socket.on('frame_update', (data) => {
+                log(`Received frame update, data length: ${data.frame ? data.frame.length : 0}`);
+                const img = document.getElementById('remoteScreen');
+                const loading = document.getElementById('loading');
+                
+                if (!data.frame) {
+                    log('ERROR: No frame data received');
+                    return;
+                }
+                
+                img.onload = () => {
+                    log('Frame loaded successfully');
+                    loading.style.display = 'none';
+                    img.style.display = 'block';
+                };
+                
+                img.onerror = (error) => {
+                    log(`ERROR loading frame: ${error}`);
+                    loading.textContent = 'Error loading frame';
+                };
+                
+                img.src = data.frame;
+            });
+            
+            socket.on('session_ended', (data) => {
+                log('Session ended by host');
+                alert('The host has ended the session.');
+                leaveSession();
+            });
+            
+            socket.on('error', (data) => {
+                log(`Error: ${data.message}`);
+                updateStatus('Error', 'disconnected');
+            });
+        }
+
+        function leaveSession() {
+            if (socket) {
+                socket.emit('leave_session', {
+                    session_id: sessionId,
+                    client_type: 'viewer'
+                });
+                socket.disconnect();
+            }
+            
+            updateStatus('Disconnected', 'disconnected');
+            document.getElementById('screenContainer').style.display = 'none';
+            log('Left session');
+        }
+
+        // Auto-join test session
+        window.addEventListener('load', () => {
+            log('Viewer test page loaded');
+        });
+    </script>
+</body>
+</html>

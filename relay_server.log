@@ -1,0 +1,84 @@
+2025-08-14 22:20:07,759 - INFO - Generating self-signed SSL certificate for testing...
+2025-08-14 22:20:31,146 - INFO - Generating self-signed SSL certificate for testing...
+2025-08-14 22:22:02,349 - INFO - SSL certificates not found. Attempting to generate...
+2025-08-14 22:22:02,369 - WARNING - OpenSSL not found or failed to generate certificates.
+2025-08-14 22:22:02,369 - INFO - Starting server without SSL (insecure mode)
+2025-08-14 22:22:02,369 - INFO - For production, install OpenSSL or use proper SSL certificates
+2025-08-14 22:22:04,029 - INFO - Created user: admin
+2025-08-14 22:22:04,029 - INFO - Relay server started on 0.0.0.0:8443
+2025-08-14 22:26:13,692 - INFO - SSL certificates not found. Attempting to generate...
+2025-08-14 22:26:13,697 - WARNING - OpenSSL not found or failed to generate certificates.
+2025-08-14 22:26:13,697 - INFO - Starting server without SSL (insecure mode)
+2025-08-14 22:26:13,697 - INFO - For production, install OpenSSL or use proper SSL certificates
+2025-08-14 22:26:13,727 - INFO - Created user: admin
+2025-08-14 22:26:13,727 - INFO - Relay server started on 0.0.0.0:8443
+2025-08-14 22:29:48,423 - INFO - New connection from ('127.0.0.1', 50302)
+2025-08-14 22:29:48,423 - ERROR - Client handling error: 'utf-8' codec can't decode byte 0xfc in position 8: invalid start byte
+2025-08-14 22:31:27,432 - INFO - SSL certificates not found. Attempting to generate...
+2025-08-14 22:31:27,440 - WARNING - OpenSSL not found or failed to generate certificates.
+2025-08-14 22:31:27,440 - INFO - Starting server without SSL (insecure mode)
+2025-08-14 22:31:27,449 - INFO - For production, install OpenSSL or use proper SSL certificates
+2025-08-14 22:31:27,466 - INFO - Created user: admin
+2025-08-14 22:31:27,470 - INFO - Relay server started on 0.0.0.0:8443
+2025-08-14 22:32:00,798 - INFO - New connection from ('127.0.0.1', 50339)
+2025-08-14 22:32:26,223 - INFO - New connection from ('127.0.0.1', 50348)
+2025-08-14 22:32:26,254 - INFO - User authenticated: admin
+2025-08-14 22:32:26,270 - INFO - Created session: 7c68fc7c-8b96-4de7-856d-6cbac28a3779 by admin
+2025-08-14 22:32:26,270 - INFO - Host client connected: admin (Session: 7c68fc7c-8b96-4de7-856d-6cbac28a3779)
+2025-08-14 22:33:53,117 - INFO - New connection from ('127.0.0.1', 50359)
+2025-08-14 22:33:53,136 - INFO - User authenticated: admin
+2025-08-14 22:33:53,136 - INFO - Viewer connected: admin to session 7c68fc7c-8b96-4de7-856d-6cbac28a3779
+2025-08-14 22:35:49,316 - INFO - SSL certificates not found. Attempting to generate...
+2025-08-14 22:35:49,333 - WARNING - OpenSSL not found or failed to generate certificates.
+2025-08-14 22:35:49,333 - INFO - Starting server without SSL (insecure mode)
+2025-08-14 22:35:49,333 - INFO - For production, install OpenSSL or use proper SSL certificates
+2025-08-14 22:35:49,349 - INFO - Created user: admin
+2025-08-14 22:35:49,349 - INFO - Relay server started on 0.0.0.0:8443
+2025-08-14 22:36:10,806 - INFO - New connection from ('127.0.0.1', 50434)
+2025-08-14 22:36:10,837 - INFO - User authenticated: admin
+2025-08-14 22:36:10,854 - INFO - Created session: aa79ee69-86e0-4d53-9484-0487de78271b by admin
+2025-08-14 22:36:10,854 - INFO - Host client connected: admin (Session: aa79ee69-86e0-4d53-9484-0487de78271b)
+2025-08-14 22:58:19,089 - INFO - Created user: admin
+2025-08-14 22:58:19,089 - INFO - SSL certificates not found. Attempting to generate...
+2025-08-14 22:58:19,106 - WARNING - OpenSSL not found or failed to generate certificates.
+2025-08-14 22:58:19,106 - INFO - Starting server without SSL (insecure mode)
+2025-08-14 22:58:19,106 - INFO - For production, install OpenSSL or use proper SSL certificates
+2025-08-14 22:58:19,124 - INFO - Created user: admin
+2025-08-14 22:58:19,124 - INFO - Relay server started on 0.0.0.0:8443
+2025-08-14 23:00:27,157 - INFO - Created user: admin
+2025-08-14 23:00:27,157 - INFO - SSL certificates not found. Attempting to generate...
+2025-08-14 23:00:27,173 - WARNING - OpenSSL not found or failed to generate certificates.
+2025-08-14 23:00:27,173 - INFO - Starting server without SSL (insecure mode)
+2025-08-14 23:00:27,173 - INFO - For production, install OpenSSL or use proper SSL certificates
+2025-08-14 23:00:27,193 - INFO - Created user: admin
+2025-08-14 23:00:27,194 - INFO - Relay server started on 0.0.0.0:8443
+2025-08-14 23:02:16,036 - INFO - New connection from ('127.0.0.1', 50736)
+2025-08-14 23:02:16,052 - INFO - User authenticated: admin
+2025-08-14 23:02:16,061 - INFO - Created session: 60e15cc4-d281-4be8-8355-2aec6ed67b0e by admin
+2025-08-14 23:02:16,076 - INFO - Host client connected: admin (Session: 60e15cc4-d281-4be8-8355-2aec6ed67b0e)
+2025-08-14 23:07:04,569 - INFO - Created user: admin
+2025-08-14 23:07:04,569 - INFO - SSL certificates not found. Attempting to generate...
+2025-08-14 23:07:04,569 - WARNING - OpenSSL not found or failed to generate certificates.
+2025-08-14 23:07:04,569 - INFO - Starting server without SSL (insecure mode)
+2025-08-14 23:07:04,569 - INFO - For production, install OpenSSL or use proper SSL certificates
+2025-08-14 23:07:04,602 - INFO - Created user: admin
+2025-08-14 23:07:04,602 - INFO - Relay server started on 0.0.0.0:8443
+2025-08-14 23:07:28,748 - INFO - Created user: admin
+2025-08-14 23:07:28,748 - INFO - SSL certificates not found. Attempting to generate...
+2025-08-14 23:07:28,757 - WARNING - OpenSSL not found or failed to generate certificates.
+2025-08-14 23:07:28,757 - INFO - Starting server without SSL (insecure mode)
+2025-08-14 23:07:28,757 - INFO - For production, install OpenSSL or use proper SSL certificates
+2025-08-14 23:07:28,784 - INFO - Created user: admin
+2025-08-14 23:07:28,784 - INFO - Relay server started on 0.0.0.0:8443
+2025-08-14 23:08:45,953 - INFO - Created user: admin
+2025-08-14 23:08:45,953 - INFO - SSL certificates not found. Attempting to generate...
+2025-08-14 23:08:45,968 - WARNING - OpenSSL not found or failed to generate certificates.
+2025-08-14 23:08:45,968 - INFO - Starting server without SSL (insecure mode)
+2025-08-14 23:08:45,968 - INFO - For production, install OpenSSL or use proper SSL certificates
+2025-08-14 23:08:45,994 - INFO - Created user: admin
+2025-08-14 23:08:45,999 - INFO - Relay server started on 0.0.0.0:8443
+2025-08-14 23:09:09,929 - INFO - New connection from ('127.0.0.1', 50842)
+2025-08-14 23:09:09,947 - INFO - User authenticated: admin
+2025-08-14 23:09:09,953 - INFO - Created session: 5edcb478-5de0-42f6-ac2a-8c8f1f42f8dc by admin
+2025-08-14 23:09:09,968 - INFO - Host client connected: admin (Session: 5edcb478-5de0-42f6-ac2a-8c8f1f42f8dc)
+2025-08-14 23:30:22,956 - INFO - Session cleaned up: 5edcb478-5de0-42f6-ac2a-8c8f1f42f8dc

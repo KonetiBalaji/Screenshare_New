@@ -1,0 +1,441 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Screen Share - Viewer</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #f5f5f5;
+            min-height: 100vh;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            color: white;
+            padding: 20px;
+            text-align: center;
+        }
+
+        .header h1 {
+            margin-bottom: 10px;
+        }
+
+        .controls {
+            background: white;
+            padding: 20px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+
+        .control-group {
+            display: flex;
+            gap: 15px;
+            align-items: center;
+            justify-content: center;
+            flex-wrap: wrap;
+            margin-bottom: 15px;
+        }
+
+        .input-group {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+
+        .input-group label {
+            font-weight: 600;
+            color: #333;
+        }
+
+        .input-group input {
+            padding: 10px;
+            border: 2px solid #ddd;
+            border-radius: 5px;
+            font-size: 14px;
+        }
+
+        .btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 5px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .btn-primary {
+            background: #f093fb;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #e67edb;
+        }
+
+        .btn-danger {
+            background: #e74c3c;
+            color: white;
+        }
+
+        .btn-danger:hover {
+            background: #c0392b;
+        }
+
+        .status {
+            text-align: center;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 10px 0;
+            font-weight: 600;
+        }
+
+        .status.connected {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+
+        .status.disconnected {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+
+        .status.connecting {
+            background: #fff3cd;
+            color: #856404;
+            border: 1px solid #ffeaa7;
+        }
+
+        .session-info {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            margin: 20px;
+            text-align: center;
+        }
+
+        .host-info {
+            font-size: 1.2em;
+            color: #f093fb;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+
+        .screen-container {
+            background: white;
+            margin: 20px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            overflow: hidden;
+            text-align: center;
+        }
+
+        .screen-container h3 {
+            padding: 20px;
+            background: #f8f9fa;
+            border-bottom: 1px solid #dee2e6;
+        }
+
+        #remoteScreen {
+            width: 100%;
+            max-width: 1200px;
+            height: auto;
+            display: block;
+            margin: 0 auto;
+        }
+
+        .clipboard-section {
+            background: white;
+            margin: 20px;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+
+        .clipboard-section h3 {
+            margin-bottom: 15px;
+            color: #333;
+        }
+
+        .clipboard-display {
+            width: 100%;
+            padding: 15px;
+            border: 2px solid #ddd;
+            border-radius: 5px;
+            font-size: 14px;
+            background: #f8f9fa;
+            min-height: 100px;
+            word-wrap: break-word;
+            white-space: pre-wrap;
+        }
+
+        .clipboard-timestamp {
+            font-size: 12px;
+            color: #666;
+            margin-top: 10px;
+        }
+
+        .loading {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 40px;
+            color: #666;
+        }
+
+        .spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #f093fb;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin-right: 15px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .no-session {
+            text-align: center;
+            padding: 60px 20px;
+            color: #666;
+        }
+
+        .no-session h3 {
+            margin-bottom: 15px;
+            color: #333;
+        }
+
+        @media (max-width: 768px) {
+            .control-group {
+                flex-direction: column;
+                align-items: stretch;
+            }
+            
+            .input-group {
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>👁️ Screen Share - Viewer</h1>
+        <p>Watch screen shares from anywhere</p>
+    </div>
+
+    <div class="controls">
+        <div class="control-group">
+            <div class="input-group">
+                <label for="sessionId">Session ID:</label>
+                <input type="text" id="sessionId" placeholder="Enter session ID to join">
+            </div>
+            <div class="input-group">
+                <label for="username">Your Name:</label>
+                <input type="text" id="username" placeholder="Enter your name" value="Viewer">
+            </div>
+            <button class="btn btn-primary" onclick="joinSession()">Join Session</button>
+            <button class="btn btn-danger" onclick="leaveSession()" disabled id="leaveBtn">Leave Session</button>
+        </div>
+        
+        <div id="status" class="status disconnected">
+            Disconnected
+        </div>
+    </div>
+
+    <div id="sessionInfo" class="session-info" style="display: none;">
+        <h3>Session Information</h3>
+        <div id="hostInfo" class="host-info"></div>
+        <p>Session ID: <span id="sessionIdDisplay"></span></p>
+    </div>
+
+    <div id="screenContainer" class="screen-container" style="display: none;">
+        <h3>Remote Screen</h3>
+        <div id="loading" class="loading">
+            <div class="spinner"></div>
+            <span>Waiting for screen share...</span>
+        </div>
+        <img id="remoteScreen" style="display: none;">
+    </div>
+
+    <div id="noSession" class="no-session">
+        <h3>No Active Session</h3>
+        <p>Enter a session ID above to start viewing a screen share.</p>
+    </div>
+
+    <div class="clipboard-section">
+        <h3>Clipboard Sync</h3>
+        <div id="clipboardDisplay" class="clipboard-display">
+            No clipboard data received yet...
+        </div>
+        <div id="clipboardTimestamp" class="clipboard-timestamp"></div>
+    </div>
+
+    <script>
+        let socket = null;
+        let sessionId = null;
+        let isConnected = false;
+
+        function updateStatus(message, type) {
+            const status = document.getElementById('status');
+            status.textContent = message;
+            status.className = `status ${type}`;
+        }
+
+        function joinSession() {
+            const sessionIdInput = document.getElementById('sessionId').value.trim();
+            const username = document.getElementById('username').value.trim() || 'Viewer';
+            
+            if (!sessionIdInput) {
+                alert('Please enter a session ID');
+                return;
+            }
+            
+            sessionId = sessionIdInput;
+            updateStatus('Connecting...', 'connecting');
+            
+            // Connect to WebSocket
+            socket = io();
+            
+            socket.on('connect', () => {
+                updateStatus('Connected', 'connected');
+                
+                // Join session as viewer
+                socket.emit('join_session', {
+                    session_id: sessionId,
+                    client_type: 'viewer',
+                    username: username
+                });
+                
+                showSessionInfo();
+                showScreenContainer();
+                hideNoSession();
+            });
+            
+            socket.on('disconnect', () => {
+                updateStatus('Disconnected', 'disconnected');
+                hideSessionInfo();
+                hideScreenContainer();
+                showNoSession();
+            });
+            
+            socket.on('joined_session', (data) => {
+                console.log('Joined session:', data);
+                document.getElementById('hostInfo').textContent = `Host: ${data.host_username}`;
+                document.getElementById('sessionIdDisplay').textContent = sessionId;
+                
+                document.getElementById('leaveBtn').disabled = false;
+                document.querySelector('button[onclick="joinSession()"]').disabled = true;
+            });
+            
+            socket.on('frame_update', (data) => {
+                console.log('Received frame update:', data);
+                const img = document.getElementById('remoteScreen');
+                const loading = document.getElementById('loading');
+                
+                if (!data.frame) {
+                    console.error('No frame data received');
+                    return;
+                }
+                
+                img.onload = () => {
+                    console.log('Frame loaded successfully');
+                    loading.style.display = 'none';
+                    img.style.display = 'block';
+                };
+                
+                img.onerror = (error) => {
+                    console.error('Error loading frame:', error);
+                    loading.textContent = 'Error loading frame';
+                };
+                
+                img.src = data.frame;
+            });
+            
+            socket.on('clipboard_update', (data) => {
+                document.getElementById('clipboardDisplay').textContent = data.text;
+                document.getElementById('clipboardTimestamp').textContent = 
+                    `Last updated: ${new Date(data.timestamp).toLocaleString()}`;
+            });
+            
+            socket.on('session_ended', (data) => {
+                alert('The host has ended the session.');
+                leaveSession();
+            });
+            
+            socket.on('error', (data) => {
+                alert(`Error: ${data.message}`);
+                updateStatus('Error', 'disconnected');
+            });
+        }
+
+        function leaveSession() {
+            if (socket) {
+                socket.emit('leave_session', {
+                    session_id: sessionId,
+                    client_type: 'viewer'
+                });
+                socket.disconnect();
+            }
+            
+            updateStatus('Disconnected', 'disconnected');
+            hideSessionInfo();
+            hideScreenContainer();
+            showNoSession();
+            
+            document.getElementById('leaveBtn').disabled = true;
+            document.querySelector('button[onclick="joinSession()"]').disabled = false;
+            
+            // Reset clipboard
+            document.getElementById('clipboardDisplay').textContent = 'No clipboard data received yet...';
+            document.getElementById('clipboardTimestamp').textContent = '';
+        }
+
+        function showSessionInfo() {
+            document.getElementById('sessionInfo').style.display = 'block';
+        }
+
+        function hideSessionInfo() {
+            document.getElementById('sessionInfo').style.display = 'none';
+        }
+
+        function showScreenContainer() {
+            document.getElementById('screenContainer').style.display = 'block';
+        }
+
+        function hideScreenContainer() {
+            document.getElementById('screenContainer').style.display = 'none';
+        }
+
+        function showNoSession() {
+            document.getElementById('noSession').style.display = 'block';
+        }
+
+        function hideNoSession() {
+            document.getElementById('noSession').style.display = 'none';
+        }
+
+        // Handle page unload
+        window.addEventListener('beforeunload', () => {
+            if (socket && socket.connected) {
+                socket.disconnect();
+            }
+        });
+    </script>
+</body>
+</html>

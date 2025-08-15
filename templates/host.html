@@ -1,0 +1,690 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Screen Share - Host</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #f5f5f5;
+            min-height: 100vh;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            text-align: center;
+        }
+
+        .header h1 {
+            margin-bottom: 10px;
+        }
+
+        .controls {
+            background: white;
+            padding: 20px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+
+        .control-group {
+            display: flex;
+            gap: 15px;
+            align-items: center;
+            justify-content: center;
+            flex-wrap: wrap;
+            margin-bottom: 15px;
+        }
+
+        .input-group {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+
+        .input-group label {
+            font-weight: 600;
+            color: #333;
+        }
+
+        .input-group input {
+            padding: 10px;
+            border: 2px solid #ddd;
+            border-radius: 5px;
+            font-size: 14px;
+        }
+
+        .btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 5px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .btn-primary {
+            background: #667eea;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #5a6fd8;
+        }
+
+        .btn-danger {
+            background: #e74c3c;
+            color: white;
+        }
+
+        .btn-danger:hover {
+            background: #c0392b;
+        }
+
+        .btn-success {
+            background: #27ae60;
+            color: white;
+        }
+
+        .btn-success:hover {
+            background: #229954;
+        }
+
+        .status {
+            text-align: center;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 10px 0;
+            font-weight: 600;
+        }
+
+        .status.connected {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+
+        .status.disconnected {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+
+        .status.connecting {
+            background: #fff3cd;
+            color: #856404;
+            border: 1px solid #ffeaa7;
+        }
+
+        .session-info {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            margin: 20px;
+            text-align: center;
+        }
+
+        .session-id {
+            font-family: monospace;
+            background: #f8f9fa;
+            padding: 10px;
+            border-radius: 5px;
+            margin: 10px 0;
+            word-break: break-all;
+        }
+
+        .viewer-count {
+            font-size: 1.2em;
+            color: #667eea;
+            font-weight: bold;
+        }
+
+        .preview {
+            background: white;
+            margin: 20px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+
+        .preview h3 {
+            padding: 20px;
+            background: #f8f9fa;
+            border-bottom: 1px solid #dee2e6;
+        }
+
+        #screenPreview {
+            width: 100%;
+            max-width: 800px;
+            height: auto;
+            display: block;
+            margin: 0 auto;
+            border: 2px solid #ddd;
+            border-radius: 5px;
+            background: #f8f9fa;
+        }
+        
+        .preview-container {
+            text-align: center;
+            padding: 20px;
+        }
+        
+        .preview-status {
+            margin: 10px 0;
+            padding: 10px;
+            border-radius: 5px;
+            font-weight: 600;
+        }
+        
+        .preview-status.active {
+            background: #d4edda;
+            color: #155724;
+        }
+        
+        .preview-status.inactive {
+            background: #f8d7da;
+            color: #721c24;
+        }
+        
+        .preview-status.connecting {
+            background: #fff3cd;
+            color: #856404;
+        }
+
+        .clipboard-section {
+            background: white;
+            margin: 20px;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+
+        .clipboard-section h3 {
+            margin-bottom: 15px;
+            color: #333;
+        }
+
+        .clipboard-input {
+            width: 100%;
+            padding: 10px;
+            border: 2px solid #ddd;
+            border-radius: 5px;
+            font-size: 14px;
+            margin-bottom: 10px;
+        }
+
+        @media (max-width: 768px) {
+            .control-group {
+                flex-direction: column;
+                align-items: stretch;
+            }
+            
+            .input-group {
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>🖥️ Screen Share - Host</h1>
+        <p>Share your screen with others globally</p>
+    </div>
+
+    <div class="controls">
+        <div class="control-group">
+            <div class="input-group">
+                <label for="sessionId">Session ID:</label>
+                <input type="text" id="sessionId" placeholder="Enter session ID or leave empty for auto-generate">
+            </div>
+            <div class="input-group">
+                <label for="username">Your Name:</label>
+                <input type="text" id="username" placeholder="Enter your name" value="Host">
+            </div>
+                         <button class="btn btn-primary" onclick="startSharing()">Start Sharing</button>
+             <button class="btn btn-danger" onclick="stopSharing()" disabled id="stopBtn">Stop Sharing</button>
+             <button class="btn btn-success" onclick="testScreenCapture()">Test Screen Capture</button>
+        </div>
+        
+        <div id="status" class="status disconnected">
+            Disconnected
+        </div>
+    </div>
+
+    <div id="sessionInfo" class="session-info" style="display: none;">
+        <h3>Session Information</h3>
+        <p>Share this session ID with viewers:</p>
+        <div id="sessionIdDisplay" class="session-id"></div>
+        <p>Viewers connected: <span id="viewerCount" class="viewer-count">0</span></p>
+    </div>
+
+    <div class="preview">
+        <h3>Screen Preview</h3>
+        <div class="preview-container">
+            <div id="previewStatus" class="preview-status inactive">
+                Screen preview not active
+            </div>
+            <canvas id="screenPreview" width="800" height="600"></canvas>
+        </div>
+    </div>
+
+    <div class="clipboard-section">
+        <h3>Clipboard Sync</h3>
+        <textarea id="clipboardInput" class="clipboard-input" placeholder="Type or paste text here to sync with viewers..." rows="3"></textarea>
+        <button class="btn btn-success" onclick="syncClipboard()">Sync Clipboard</button>
+    </div>
+
+    <script>
+        let socket = null;
+        let sessionId = null;
+        let isSharing = false;
+        let mediaStream = null;
+        let canvas = document.getElementById('screenPreview');
+        let ctx = canvas.getContext('2d');
+        
+        // Draw a test pattern to verify canvas is working
+        function drawTestPattern() {
+            ctx.fillStyle = '#f0f0f0';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            ctx.fillStyle = '#333';
+            ctx.font = '20px Arial';
+            ctx.textAlign = 'center';
+            ctx.fillText('Screen Preview - Click "Start Sharing" to begin', canvas.width/2, canvas.height/2);
+        }
+        
+        // Draw initial test pattern
+        drawTestPattern();
+
+        function updateStatus(message, type) {
+            const status = document.getElementById('status');
+            status.textContent = message;
+            status.className = `status ${type}`;
+        }
+        
+        function updatePreviewStatus(message, type) {
+            const previewStatus = document.getElementById('previewStatus');
+            previewStatus.textContent = message;
+            previewStatus.className = `preview-status ${type}`;
+        }
+
+        function startSharing() {
+            const sessionIdInput = document.getElementById('sessionId').value.trim();
+            const username = document.getElementById('username').value.trim() || 'Host';
+            
+            sessionId = sessionIdInput || generateSessionId();
+            
+            console.log('Starting sharing with session ID:', sessionId);
+            updateStatus('Connecting...', 'connecting');
+            
+            // Connect to WebSocket
+            socket = io();
+            
+            socket.on('connect', () => {
+                updateStatus('Connected', 'connected');
+                
+                // Join session as host
+                socket.emit('join_session', {
+                    session_id: sessionId,
+                    client_type: 'host',
+                    username: username
+                });
+                
+                // Create session
+                fetch(`/api/session/${sessionId}`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        host_username: username
+                    })
+                }).then(response => {
+                    if (!response.ok) {
+                        return response.json().then(errorData => {
+                            throw new Error(errorData.error || 'Failed to create session');
+                        });
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    console.log('Session created:', data);
+                })
+                .catch(error => {
+                    console.error('Error creating session:', error);
+                    // If session already exists, that's okay - we can still join it
+                    if (error.message.includes('already exists')) {
+                        console.log('Session already exists, continuing...');
+                    } else {
+                        updateStatus('Failed to create session: ' + error.message, 'disconnected');
+                        return;
+                    }
+                });
+                
+                startScreenCapture();
+                showSessionInfo();
+            });
+            
+            socket.on('disconnect', () => {
+                updateStatus('Disconnected', 'disconnected');
+                stopScreenCapture();
+            });
+            
+            socket.on('joined_session', (data) => {
+                console.log('Joined session:', data);
+            });
+            
+            socket.on('viewer_joined', (data) => {
+                updateViewerCount(data.viewer_count);
+            });
+            
+            socket.on('viewer_left', (data) => {
+                updateViewerCount(data.viewer_count);
+            });
+        }
+
+        function stopSharing() {
+            if (socket) {
+                socket.emit('leave_session', {
+                    session_id: sessionId,
+                    client_type: 'host'
+                });
+                socket.disconnect();
+            }
+            
+            stopScreenCapture();
+            updateStatus('Disconnected', 'disconnected');
+            hideSessionInfo();
+            
+            document.getElementById('stopBtn').disabled = true;
+            document.querySelector('button[onclick="startSharing()"]').disabled = false;
+        }
+
+        function startScreenCapture() {
+            console.log('Starting screen capture...');
+            updatePreviewStatus('Requesting screen access...', 'connecting');
+            
+            // Check if we have permission or need to request it
+            if (!navigator.mediaDevices || !navigator.mediaDevices.getDisplayMedia) {
+                console.error('getDisplayMedia not supported');
+                updatePreviewStatus('Screen capture not supported', 'inactive');
+                return;
+            }
+            
+            // Check if we're on HTTPS or localhost
+            const isSecure = window.location.protocol === 'https:' || window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+            if (!isSecure) {
+                console.warn('Screen capture may be blocked on non-HTTPS connections');
+                updatePreviewStatus('Warning: Use HTTPS for reliable screen capture', 'connecting');
+            }
+            
+            const constraints = {
+                video: {
+                    cursor: "always",
+                    displaySurface: "monitor"
+                },
+                audio: false
+            };
+            
+            console.log('Requesting screen capture with constraints:', constraints);
+            
+            navigator.mediaDevices.getDisplayMedia(constraints).then(stream => {
+                console.log('Screen capture started successfully');
+                mediaStream = stream;
+                const video = document.createElement('video');
+                video.srcObject = stream;
+                video.muted = true;
+                
+                video.onloadedmetadata = () => {
+                    console.log('Video metadata loaded:', video.videoWidth, 'x', video.videoHeight);
+                    video.play();
+                    
+                    // Set canvas size to match video
+                    canvas.width = video.videoWidth;
+                    canvas.height = video.videoHeight;
+                    
+                    console.log('Canvas size set to:', canvas.width, 'x', canvas.height);
+                    
+                    // Start capturing frames
+                    captureFrame();
+                };
+                
+                video.onerror = (error) => {
+                    console.error('Video error:', error);
+                    updatePreviewStatus('Video error occurred', 'inactive');
+                };
+                
+                function captureFrame() {
+                    if (video.videoWidth > 0 && video.videoHeight > 0 && isSharing) {
+                        try {
+                            // Draw video frame to canvas
+                            ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+                            
+                            // Send frame to server
+                            if (socket && socket.connected) {
+                                canvas.toBlob(blob => {
+                                    const reader = new FileReader();
+                                    reader.onload = () => {
+                                        const frameData = reader.result;
+                                        console.log('Sending frame data, length:', frameData.length);
+                                        socket.emit('frame_data', {
+                                            session_id: sessionId,
+                                            frame: frameData
+                                        });
+                                    };
+                                    reader.readAsDataURL(blob);
+                                }, 'image/jpeg', 0.8);
+                            } else {
+                                console.warn('Socket not connected, cannot send frame');
+                            }
+                        } catch (error) {
+                            console.error('Error capturing frame:', error);
+                        }
+                    }
+                    
+                    if (isSharing) {
+                        // Capture at 10 FPS (100ms intervals)
+                        setTimeout(captureFrame, 100);
+                    }
+                }
+                
+                isSharing = true;
+                updateStatus('Screen sharing active', 'connected');
+                updatePreviewStatus('Screen capture active', 'active');
+                
+                document.getElementById('stopBtn').disabled = false;
+                document.querySelector('button[onclick="startSharing()"]').disabled = true;
+                
+            }).catch(err => {
+                console.error('Error accessing screen:', err);
+                console.error('Error name:', err.name);
+                console.error('Error message:', err.message);
+                console.error('Error stack:', err.stack);
+                
+                let errorMessage = 'Failed to access screen: ' + err.message;
+                if (err.name === 'NotAllowedError') {
+                    errorMessage = 'Screen capture permission denied. Please allow screen sharing.';
+                } else if (err.name === 'NotSupportedError') {
+                    errorMessage = 'Screen capture not supported in this browser.';
+                } else if (err.name === 'SecurityError') {
+                    errorMessage = 'Screen capture blocked due to security restrictions. Try using HTTPS.';
+                }
+                
+                updateStatus(errorMessage, 'disconnected');
+                updatePreviewStatus('Screen access denied: ' + err.message, 'inactive');
+                
+                // Re-enable start button
+                document.getElementById('stopBtn').disabled = true;
+                document.querySelector('button[onclick="startSharing()"]').disabled = false;
+            });
+        }
+
+        function stopScreenCapture() {
+            isSharing = false;
+            if (mediaStream) {
+                mediaStream.getTracks().forEach(track => track.stop());
+                mediaStream = null;
+            }
+            updatePreviewStatus('Screen preview not active', 'inactive');
+        }
+
+        function showSessionInfo() {
+            document.getElementById('sessionInfo').style.display = 'block';
+            document.getElementById('sessionIdDisplay').textContent = sessionId;
+        }
+
+        function hideSessionInfo() {
+            document.getElementById('sessionInfo').style.display = 'none';
+        }
+
+        function updateViewerCount(count) {
+            document.getElementById('viewerCount').textContent = count;
+        }
+
+        function syncClipboard() {
+            const text = document.getElementById('clipboardInput').value;
+            if (text && socket && socket.connected) {
+                socket.emit('clipboard_data', {
+                    session_id: sessionId,
+                    text: text
+                });
+            }
+        }
+
+        function generateSessionId() {
+            // Generate a proper UUID v4 format
+            return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+                const r = Math.random() * 16 | 0;
+                const v = c == 'x' ? r : (r & 0x3 | 0x8);
+                return v.toString(16);
+            });
+        }
+        
+        function testScreenCapture() {
+            console.log('Testing screen capture...');
+            updatePreviewStatus('Testing screen capture...', 'connecting');
+            
+            // First, let's test if canvas is working at all
+            console.log('Testing canvas...');
+            ctx.fillStyle = 'red';
+            ctx.fillRect(0, 0, 100, 100);
+            console.log('Red square drawn to canvas');
+            
+            // Check if we're on HTTPS or localhost
+            const isSecure = window.location.protocol === 'https:' || window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+            if (!isSecure) {
+                console.warn('Screen capture may be blocked on non-HTTPS connections');
+                updatePreviewStatus('Warning: Use HTTPS for reliable screen capture', 'connecting');
+            }
+            
+            // Now test screen capture
+            const constraints = {
+                video: {
+                    cursor: "always",
+                    displaySurface: "monitor"
+                },
+                audio: false
+            };
+            
+            console.log('Requesting screen capture with constraints:', constraints);
+            
+            navigator.mediaDevices.getDisplayMedia(constraints).then(stream => {
+                console.log('Test screen capture successful!');
+                updatePreviewStatus('Test successful - screen capture works!', 'active');
+                
+                                 // Create a test video element to verify it works
+                 const testVideo = document.createElement('video');
+                 testVideo.srcObject = stream;
+                 testVideo.muted = true;
+                 
+                 console.log('Test video element created');
+                 
+                 testVideo.onloadedmetadata = () => {
+                     console.log('Test video metadata:', testVideo.videoWidth, 'x', testVideo.videoHeight);
+                     console.log('Canvas current size:', canvas.width, 'x', canvas.height);
+                     
+                     // Set canvas size to match video
+                     canvas.width = testVideo.videoWidth;
+                     canvas.height = testVideo.videoHeight;
+                     console.log('Canvas resized to:', canvas.width, 'x', canvas.height);
+                     
+                     testVideo.play();
+                     
+                     // Wait a bit for video to start playing, then draw frame
+                     setTimeout(() => {
+                         try {
+                             // Draw a test frame to canvas
+                             ctx.drawImage(testVideo, 0, 0, canvas.width, canvas.height);
+                             console.log('Test frame drawn to canvas successfully');
+                             
+                             // Add a visual indicator that the canvas was updated
+                             ctx.strokeStyle = '#00ff00';
+                             ctx.lineWidth = 5;
+                             ctx.strokeRect(10, 10, canvas.width - 20, canvas.height - 20);
+                             console.log('Green border added to indicate canvas update');
+                             
+                             // Stop the test stream
+                             stream.getTracks().forEach(track => track.stop());
+                             
+                             setTimeout(() => {
+                                 updatePreviewStatus('Test completed - ready to share', 'inactive');
+                                 drawTestPattern(); // Reset canvas
+                             }, 2000);
+                         } catch (error) {
+                             console.error('Error drawing test frame:', error);
+                             updatePreviewStatus('Test failed: ' + error.message, 'inactive');
+                         }
+                     }, 500);
+                 };
+                 
+                 testVideo.onerror = (error) => {
+                     console.error('Test video error:', error);
+                     updatePreviewStatus('Test video error occurred', 'inactive');
+                 };
+                
+            }).catch(err => {
+                console.error('Test screen capture failed:', err);
+                console.error('Error name:', err.name);
+                console.error('Error message:', err.message);
+                console.error('Error stack:', err.stack);
+                
+                let errorMessage = 'Test failed: ' + err.message;
+                if (err.name === 'NotAllowedError') {
+                    errorMessage = 'Screen capture permission denied. Please allow screen sharing.';
+                } else if (err.name === 'NotSupportedError') {
+                    errorMessage = 'Screen capture not supported in this browser.';
+                } else if (err.name === 'SecurityError') {
+                    errorMessage = 'Screen capture blocked due to security restrictions. Try using HTTPS.';
+                }
+                
+                updatePreviewStatus(errorMessage, 'inactive');
+            });
+        }
+
+        // Check browser support
+        if (!navigator.mediaDevices || !navigator.mediaDevices.getDisplayMedia) {
+            console.error('Screen capture not supported in this browser');
+            updateStatus('Screen capture not supported in this browser', 'disconnected');
+        } else {
+            console.log('Screen capture is supported');
+        }
+        
+        // Auto-sync clipboard on input change
+        document.getElementById('clipboardInput').addEventListener('input', function() {
+            if (isSharing) {
+                syncClipboard();
+            }
+        });
+    </script>
+</body>
+</html>
