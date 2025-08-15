@@ -274,6 +274,7 @@ if __name__ == '__main__':
     os.makedirs('static', exist_ok=True)
     
     import argparse
+    import os
     
     parser = argparse.ArgumentParser(description='Web-based Screen Share Client')
     parser.add_argument('--https', action='store_true', help='Enable HTTPS (requires cert.pem and key.pem)')
@@ -282,35 +283,17 @@ if __name__ == '__main__':
     
     args = parser.parse_args()
     
-    if args.https:
-        # Check for SSL certificates
-        if not os.path.exists('cert.pem') or not os.path.exists('key.pem'):
-            print("[-] HTTPS mode requires cert.pem and key.pem files")
-            print("[!] Generating self-signed certificates for testing...")
-            
-            try:
-                import subprocess
-                subprocess.run([
-                    'openssl', 'req', '-x509', '-newkey', 'rsa:4096', '-keyout', 'key.pem', 
-                    '-out', 'cert.pem', '-days', '365', '-nodes', '-subj', '/CN=localhost'
-                ], check=True)
-                print("[+] Self-signed certificates generated")
-            except (subprocess.CalledProcessError, FileNotFoundError):
-                print("[-] Failed to generate certificates. OpenSSL not found.")
-                print("[!] Running without HTTPS...")
-                args.https = False
-        
-        if args.https:
-            print(f"[+] Starting web client with HTTPS on https://localhost:{args.port}")
-            socketio.run(app, host=args.host, port=args.port, debug=True, 
-                        ssl_context=('cert.pem', 'key.pem'))
-        else:
-            print(f"[+] Starting web client on http://localhost:{args.port}")
-            socketio.run(app, host=args.host, port=args.port, debug=True)
-    else:
-        print(f"[+] Starting web client on http://localhost:{args.port}")
-        print("[!] Note: For screen capture to work properly, use HTTPS in production")
-        print("[!] For testing, you may need to allow insecure screen capture in your browser")
-        print("[!] Use --https flag to enable HTTPS mode")
-        
-        socketio.run(app, host=args.host, port=args.port, debug=True)
+    # Use environment variables for production deployment
+    port = int(os.environ.get('PORT', args.port))
+    host = os.environ.get('HOST', args.host)
+    debug = os.environ.get('DEBUG', 'False').lower() == 'true'
+    
+    print(f"[+] Starting web client on {host}:{port}")
+    print(f"[+] Debug mode: {debug}")
+    print(f"[+] Environment: {os.environ.get('RAILWAY_ENVIRONMENT', 'local')}")
+    
+    # For production, disable debug mode
+    if not debug:
+        print("[+] Production mode - debug disabled")
+    
+    socketio.run(app, host=host, port=port, debug=debug)
