@@ -82,3 +82,10 @@
 2025-08-14 23:09:09,953 - INFO - Created session: 5edcb478-5de0-42f6-ac2a-8c8f1f42f8dc by admin
 2025-08-14 23:09:09,968 - INFO - Host client connected: admin (Session: 5edcb478-5de0-42f6-ac2a-8c8f1f42f8dc)
 2025-08-14 23:30:22,956 - INFO - Session cleaned up: 5edcb478-5de0-42f6-ac2a-8c8f1f42f8dc
+2025-08-15 00:34:45,714 - INFO - Created user: admin
+2025-08-15 00:34:45,714 - INFO - SSL certificates not found. Attempting to generate...
+2025-08-15 00:34:45,714 - WARNING - OpenSSL not found or failed to generate certificates.
+2025-08-15 00:34:45,714 - INFO - Starting server without SSL (insecure mode)
+2025-08-15 00:34:45,714 - INFO - For production, install OpenSSL or use proper SSL certificates
+2025-08-15 00:34:45,729 - INFO - Created user: admin
+2025-08-15 00:34:45,745 - INFO - Relay server started on 0.0.0.0:8443
